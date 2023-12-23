@@ -3,6 +3,7 @@
 namespace EventHandler {
     bool close = false;
     SDL_Event e;
+    coord OnClickListener::c = {-1,-1};
 }
 
 void GUI::WindowManager::CreateWindow(){
@@ -62,6 +63,16 @@ void GUI::WindowManager::SetText(SDL_Rect parent, const char* text, int x, int y
 
 }
 
+bool EventHandler::OnClickListener::clicked(SDL_Rect r){
+    bool ret = false;
+    if(c.x != -1 && c.y != -1){
+        ret = (c.x>=r.x && c.x <= r.x+r.w) && (c.y >=r.y && c.y <=r.y+r.h);
+        c = {-1,-1};
+    }
+
+    return ret;
+}
+
 void EventHandler::listen(){
     while(SDL_PollEvent(&EventHandler::e)){
         switch (EventHandler::e.type)
@@ -71,6 +82,7 @@ void EventHandler::listen(){
             break;
 
             case SDL_MOUSEBUTTONDOWN:
+            EventHandler::OnClickListener::c = {e.button.x, e.button.y};
             break;
         }
     }

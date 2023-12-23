@@ -1,5 +1,7 @@
 #include "Login.hpp"
 
+SDL_Rect chatNowBtn;
+
 Login::Login(GUI::WindowManager* wm){
     this->wm = wm;
 }
@@ -28,8 +30,6 @@ void Login::loginUI(){
     wm->Draw({255, 255, 255, 0}, inputBox, false);
 
 
-
-    SDL_Rect chatNowBtn;
     chatNowBtn.h=60;
     chatNowBtn.w= 100;
     chatNowBtn.y = (HEIGHT-chatNowBtn.h)/2 + 50;
@@ -48,6 +48,9 @@ void Login::loginUI(){
 void Login::eventLoop(){
     while(!EventHandler::close){
         EventHandler::listen();
+        if(EventHandler::OnClickListener::clicked(chatNowBtn)){
+            std::cout << "chat now clicked\n";
+        }
     }
 }
 

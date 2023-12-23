@@ -18,6 +18,10 @@ typedef struct{
     int r,g,b,a;
 } color;
 
+typedef struct{
+    int x, y;
+} coord;
+
 namespace GUI{
 
     class WindowManager{
@@ -52,7 +56,8 @@ namespace EventHandler{
 
     class OnClickListener{
         public:
-        void onClick(SDL_Rect r);
+        static coord c;
+        static bool clicked(SDL_Rect r);
 
     };
 
