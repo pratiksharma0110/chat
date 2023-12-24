@@ -49,6 +49,7 @@ void Login::loginUI(){
 
 void Login::eventLoop(){
     while(!EventHandler::close){
+        // loginUI();
         EventHandler::listen();
         if(EventHandler::OnClickListener::clicked(inputBox)){
             std::cout << "Input mode started\n";
@@ -63,6 +64,10 @@ void Login::eventLoop(){
         }
 
         if(EventHandler::typing){
+            for(int i = 0; i < EventHandler::KeyEventListener::inputBuffer.length(); i++){
+                // EventHandler::KeyEventListener::inputBuffer[i] = ' ';
+                std::cout << GUI::Utils::getchrptr(EventHandler::KeyEventListener::inputBuffer)[i] << '\n';
+            }
             wm->SetText(inputBox, GUI::Utils::getchrptr(EventHandler::KeyEventListener::inputBuffer), 5, 5, {255,255,255,255}, 13);
             EventHandler::typing = false;
             SDL_RenderPresent(wm->renderer);

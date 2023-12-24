@@ -44,6 +44,7 @@ namespace GUI{
 
         static const char* getchrptr(std::string s){
             char * c = (char*)malloc(s.length());
+            memset(c, 0, s.length());
             for(int i = 0; i < s.length(); i++){
                 c[i] = s[i];
             }
