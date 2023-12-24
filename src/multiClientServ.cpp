@@ -188,10 +188,6 @@ void handleClientSockets(int listenSocket, int *clientSockets, fd_set &readFds)
     }
 }
 
-void processClientData(int clientSocket, int *clientSockets)
-{
-   
-}
 
 int main()
 {
