@@ -1,6 +1,9 @@
 #include "Login.hpp"
+#include "Chautari.hpp"
 
 SDL_Rect chatNowBtn;
+SDL_Rect inputBox;
+
 
 Login::Login(GUI::WindowManager* wm){
     this->wm = wm;
@@ -22,7 +25,6 @@ void Login::loginUI(){
 
 //   wm->SetText(r, "test:",40, 40, {255,255,255,255}, 16);
 
-    SDL_Rect inputBox;
     inputBox.h=30;
     inputBox.w= 200;
     inputBox.y = (HEIGHT-inputBox.h)/2 - 40;
@@ -48,9 +50,28 @@ void Login::loginUI(){
 void Login::eventLoop(){
     while(!EventHandler::close){
         EventHandler::listen();
-        if(EventHandler::OnClickListener::clicked(chatNowBtn)){
-            std::cout << "chat now clicked\n";
+        if(EventHandler::OnClickListener::clicked(inputBox)){
+            std::cout << "Input mode started\n";
+            EventHandler::KeyEventListener::inputMode = true;
         }
+        if(EventHandler::OnClickListener::clicked(chatNowBtn)){
+            std::cout << "Your username: ";
+            std::cout << EventHandler::KeyEventListener::inputBuffer << "\n";
+            EventHandler::KeyEventListener::inputBuffer = " ";
+            EventHandler::KeyEventListener::inputMode = false;
+            break;
+        }
+
+        if(EventHandler::typing){
+            wm->SetText(inputBox, GUI::Utils::getchrptr(EventHandler::KeyEventListener::inputBuffer), 5, 5, {255,255,255,255}, 13);
+            EventHandler::typing = false;
+            SDL_RenderPresent(wm->renderer);
+        }
+
+        // std::cout << GUI::Utils::stringToCharPtr(EventHandler::KeyEventListener::inputBuffer) << "\n";
+        // wm->SetText(inputBox, GUI::Utils::getchrptr(EventHandler::KeyEventListener::inputBuffer), 5, 5, {255,255,255,255}, 13);
+        // wm->SetText(inputBox, "testusername", 5, 5, {255,255,255,255}, 13);
+        EventHandler::OnClickListener::c = {-1,-1};
     }
 }
 
@@ -59,5 +80,7 @@ void Login::loginScreen(){
     loginUI();
 
     eventLoop();
+    
+    (new Chautari(wm, EventHandler::KeyEventListener::inputBuffer))->chautari();
 
 }

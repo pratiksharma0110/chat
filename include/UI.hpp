@@ -5,8 +5,8 @@
 #include <iostream>
 #include <string>
 
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 1280
+#define HEIGHT 768
 
 #define TITLE "Digital Chautari"
 
@@ -22,6 +22,7 @@ typedef struct{
     int x, y;
 } coord;
 
+
 namespace GUI{
 
     class WindowManager{
@@ -30,13 +31,25 @@ namespace GUI{
         SDL_Renderer* renderer;
         void CreateWindow();
         void Draw(color c, SDL_Rect r, bool fill);
+        void Clear();
         void SetText(SDL_Rect parent, const char* text, int x, int y, SDL_Color c, int fontSize);
+        static void FillInput(SDL_Rect inputBox, const char* text, int x, int y, SDL_Color c, int fontSize);
     };
 
     class Utils{
         public:
         void cursorBlink(){
 
+        }
+
+        static const char* getchrptr(std::string s){
+            char * c = (char*)malloc(s.length());
+            for(int i = 0; i < s.length(); i++){
+                c[i] = s[i];
+            }
+            const char* cc = c;
+
+            return cc;
         }
     };
 }
@@ -47,11 +60,16 @@ namespace EventHandler{
     extern bool close;
 
     extern SDL_Event e;
+
+    extern bool typing;
    
     void listen();
 
     class KeyEventListener{
-
+        public:
+        static bool inputMode;
+        static std::string inputBuffer;
+        // static SDL_Rect inputBox;
     };
 
     class OnClickListener{

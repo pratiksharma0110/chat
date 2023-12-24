@@ -4,6 +4,10 @@ namespace EventHandler {
     bool close = false;
     SDL_Event e;
     coord OnClickListener::c = {-1,-1};
+    bool KeyEventListener::inputMode = false;
+    std::string KeyEventListener::inputBuffer = " ";
+    SDL_Rect inputBox = {0,0,0,0};
+    bool typing = false;
 }
 
 void GUI::WindowManager::CreateWindow(){
@@ -60,21 +64,31 @@ void GUI::WindowManager::SetText(SDL_Rect parent, const char* text, int x, int y
 
     SDL_RenderCopy(renderer, textTexture, nullptr, &destRect);
     // SDL_RenderPresent(renderer);
+}
 
+void GUI::WindowManager::Clear(){
+        SDL_SetRenderDrawColor(renderer, 0,0,0,0);
+        SDL_RenderClear(renderer);
 }
 
 bool EventHandler::OnClickListener::clicked(SDL_Rect r){
     bool ret = false;
+    // std::cout << "c = " << EventHandler::OnClickListener::c.x << ", " << EventHandler::OnClickListener::c.y << "\n";
     if(c.x != -1 && c.y != -1){
+        // std::cout << "c = " << EventHandler::OnClickListener::c.x << ", " << EventHandler::OnClickListener::c.y;
         ret = (c.x>=r.x && c.x <= r.x+r.w) && (c.y >=r.y && c.y <=r.y+r.h);
-        c = {-1,-1};
-    }
+        // c = {-1,-1};
 
+        // std::cout << "(" << ret << ")\n";
+    }
     return ret;
 }
 
 void EventHandler::listen(){
+    // int i = 0;
     while(SDL_PollEvent(&EventHandler::e)){
+        // std::cout << i << "\n";
+        // i++;
         switch (EventHandler::e.type)
         {
             case SDL_QUIT:
@@ -82,7 +96,28 @@ void EventHandler::listen(){
             break;
 
             case SDL_MOUSEBUTTONDOWN:
+            // std::cout << "clicked\n";
             EventHandler::OnClickListener::c = {e.button.x, e.button.y};
+            // std::cout << "c = " << EventHandler::OnClickListener::c.x << ", " << EventHandler::OnClickListener::c.y << "\n";
+            break;
+
+            case SDL_KEYDOWN:
+            if(e.key.keysym.sym == SDLK_RETURN){
+                EventHandler::KeyEventListener::inputMode = false;
+            }
+            else{
+                if(EventHandler::KeyEventListener::inputMode){
+                    typing = true;
+                    // for(int i = 0; i < EventHandler::KeyEventListener::inputBuffer.length(); i++){
+                    //     EventHandler::KeyEventListener::inputBuffer[i] = '.';
+                    // }
+                    EventHandler::KeyEventListener::inputBuffer += SDL_GetKeyName(e.key.keysym.sym);
+                // std::cout << EventHandler::KeyEventListener::inputBuffer;
+                
+            }
+
+            }
+            
             break;
         }
     }
