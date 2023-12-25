@@ -1,15 +1,19 @@
 #include <iostream>
 #include <string>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
 #include <sys/select.h>
+#include <signal.h>
 
 #define servPORT 8080
 
 using namespace std;
+
+char buffer[1024];
 
 int initializeSocket(const char *servIP,char *username)
 {
@@ -48,6 +52,31 @@ int initializeSocket(const char *servIP,char *username)
     return clientSocket;
 }
 
+int sendMessage(int clientSocket,char *buff){
+
+    size_t msgLen = strlen(buff);
+
+    int msg = send(clientSocket, &msgLen, sizeof(msgLen), 0);
+
+    if (msg == -1)
+    {
+        cerr << "[SYSTEM] Error sending message\n";
+        return -1;
+    }
+
+    msg = send(clientSocket, buff, msgLen, 0);
+
+    if (msg == -1)
+    {
+        cerr << "[SYSTEM] Error sending message data \n";
+        return -1;
+    }
+    else
+    {
+        cout << "[SYSTEM] Sent: " << buff << '\n';
+    }
+}
+
 void sendMessageLoop(int clientSocket)
 {
     fd_set readFds;
@@ -81,7 +110,7 @@ void sendMessageLoop(int clientSocket)
             }
             else
             {
-                char buffer[1024];
+                
                 int bytesRead = recv(clientSocket, buffer, messageLen, 0);
 
                 if (bytesRead <= 0)
@@ -92,7 +121,8 @@ void sendMessageLoop(int clientSocket)
                 else
                 {
                     buffer[bytesRead] = '\0';
-                    cout << "[SYSTEM] Received broadcast from server: " << buffer << endl;
+                    pid_t pid = getpid();
+                    kill(pid,SIGUSR1);
                 }
             }
         }
@@ -101,36 +131,20 @@ void sendMessageLoop(int clientSocket)
             // User input available
             char buff[400];
             cin.getline(buff, 400);
-
-            size_t msgLen = strlen(buff);
-
-            int msg = send(clientSocket, &msgLen, sizeof(msgLen), 0);
-
-            if (msg == -1)
-            {
-                cerr << "[SYSTEM] Error sending message\n";
-                break;
-            }
-
-            msg = send(clientSocket, buff, msgLen, 0);
-
-            if (msg == -1)
-            {
-                cerr << "[SYSTEM] Error sending message data \n";
-                break;
-            }
-            else
-            {
-                cout << "[SYSTEM] Sent: " << buff << '\n';
-            }
+            if(sendMessage(clientSocket,buff)==-1) break;
         }
     }
 }
 
+void msgRecvHdlr(int signum){
+    cout << "[SYSTEM] Received broadcast from server: " << buffer << endl;
+}
+
 int main()
 {
+    signal(SIGUSR1,msgRecvHdlr);
     const char *servIP = "127.0.0.1";
-    char username[] = {'j','o','h','n'};
+    char username[] = "john doe";
 
     // Initialize socket and connect to the server
     int clientSocket = initializeSocket(servIP,username);
