@@ -80,6 +80,8 @@ User acceptConnection(int listenSocket)
         read(client.socket,client.username,20);
         cout << "[SYSTEM] Accepted connection from "
              << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << "Username: " <<client.username<<endl;
+
+        //write()
     }
     else
     {
@@ -184,7 +186,7 @@ void handleClientSockets(int listenSocket,  User *clients, fd_set &readFds)
                         for (int j = 0; j < MAX_CLIENTS; ++j)
                         {
                             int dest_socket = clients[j].socket;
-                            if (dest_socket > 0 && dest_socket != client_socket)
+                            if (dest_socket > 0)
                             {
                                 // Send the message to the destination client
                                 send(dest_socket, &messageLen, sizeof(messageLen), 0);
