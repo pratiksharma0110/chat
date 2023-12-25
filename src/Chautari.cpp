@@ -52,17 +52,17 @@ void Chautari::chautari(){
 
     Message m1;
     m1.p = {"owl", "hlo bros k xa"};
-    m1.r.y = 30+ 50 * messages.size();
+    m1.r.y = 30 - 50 * messages.size();
     messages.push_back(m1);
 
     Message m2;
     m2.p = {"doge", "im pedo"};
-    m2.r.y = 30+ 50 * messages.size();
+    m2.r.y = 30 - 50 * messages.size();
     messages.push_back(m2);
 
     Message m3;
     m3.p = {"chad", "chi k bhaneko esto dost"};
-    m3.r.y = 30+ 50 * messages.size();
+    m3.r.y = 30 - 50 * messages.size();
     messages.push_back(m3);
 
 
