@@ -1,5 +1,8 @@
 #include "UI.hpp"
 
+
+TTF_Font* font13, *font16, *font30;
+
 namespace EventHandler {
     bool close = false;
     SDL_Event e;
@@ -20,6 +23,10 @@ void GUI::WindowManager::CreateWindow(){
         SDL_Quit();
     }
 
+    font13 = TTF_OpenFont(FONT, 13);    
+    font16 = TTF_OpenFont(FONT, 16);    
+    font30 = TTF_OpenFont(FONT, 30);    
+
     window = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     SDL_SetRenderDrawColor(renderer, 0,0,0,0);
@@ -32,12 +39,11 @@ void GUI::WindowManager::Draw(color c, SDL_Rect r, bool fill){
         SDL_RenderFillRect(renderer, &r);
     }
     SDL_RenderDrawRect(renderer, &r);
-    // SDL_RenderPresent(renderer);
 }
 
+
 void GUI::WindowManager::SetText(SDL_Rect parent, const char* text, int x, int y, SDL_Color c, int fontSize){
-    TTF_Font* font = TTF_OpenFont(FONT, fontSize);
-    if (!font) {
+    if (!font13 || !font16 || !font30) {
         std::cerr << "TTF_OpenFont Error: " << TTF_GetError() << std::endl;
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
@@ -45,6 +51,20 @@ void GUI::WindowManager::SetText(SDL_Rect parent, const char* text, int x, int y
         SDL_Quit();
     }
     SDL_Color bg = {0,0,0,0};
+    TTF_Font* font;
+    switch(fontSize){
+        case 13:
+        font = font13;
+        break;
+
+        case 16:
+        font = font16;
+        break;
+
+        case 30:
+        font=font30;
+        break;
+    }
     SDL_Surface* textSurface = TTF_RenderText_Solid(font, (const char*)text, c);
     
     if (!textSurface) {
@@ -58,12 +78,9 @@ void GUI::WindowManager::SetText(SDL_Rect parent, const char* text, int x, int y
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 
     SDL_FreeSurface(textSurface);
-
-    // SDL_Rect destRect = {parent.x + (parent.w - textSurface->w) / 2, parent.y + (parent.h - textSurface->h) / 2, textSurface->w, textSurface->h};
     SDL_Rect destRect = {parent.x + x, parent.y + y, textSurface->w, textSurface->h};
 
     SDL_RenderCopy(renderer, textTexture, nullptr, &destRect);
-    // SDL_RenderPresent(renderer);
 }
 
 void GUI::WindowManager::Clear(){
@@ -73,22 +90,15 @@ void GUI::WindowManager::Clear(){
 
 bool EventHandler::OnClickListener::clicked(SDL_Rect r){
     bool ret = false;
-    // std::cout << "c = " << EventHandler::OnClickListener::c.x << ", " << EventHandler::OnClickListener::c.y << "\n";
-    if(c.x != -1 && c.y != -1){
-        // std::cout << "c = " << EventHandler::OnClickListener::c.x << ", " << EventHandler::OnClickListener::c.y;
-        ret = (c.x>=r.x && c.x <= r.x+r.w) && (c.y >=r.y && c.y <=r.y+r.h);
-        // c = {-1,-1};
-
-        // std::cout << "(" << ret << ")\n";
+     if(c.x != -1 && c.y != -1){
+              ret = (c.x>=r.x && c.x <= r.x+r.w) && (c.y >=r.y && c.y <=r.y+r.h);
     }
     return ret;
 }
 
 void EventHandler::listen(){
-    // int i = 0;
     while(SDL_PollEvent(&EventHandler::e)){
-        // std::cout << i << "\n";
-        // i++;
+
         switch (EventHandler::e.type)
         {
             case SDL_QUIT:
@@ -96,9 +106,7 @@ void EventHandler::listen(){
             break;
 
             case SDL_MOUSEBUTTONDOWN:
-            // std::cout << "clicked\n";
             EventHandler::OnClickListener::c = {e.button.x, e.button.y};
-            // std::cout << "c = " << EventHandler::OnClickListener::c.x << ", " << EventHandler::OnClickListener::c.y << "\n";
             break;
 
             case SDL_KEYDOWN:
@@ -106,18 +114,19 @@ void EventHandler::listen(){
                 EventHandler::KeyEventListener::inputMode = false;
             }
             else{
-                if(EventHandler::KeyEventListener::inputMode){
-                    typing = true;
-                    // for(int i = 0; i < EventHandler::KeyEventListener::inputBuffer.length(); i++){
-                    //     EventHandler::KeyEventListener::inputBuffer[i] = '.';
-                    // }
-                    EventHandler::KeyEventListener::inputBuffer += SDL_GetKeyName(e.key.keysym.sym);
-                // std::cout << EventHandler::KeyEventListener::inputBuffer;
-                
-            }
+
+                if(e.key.keysym.sym == SDLK_BACKSPACE && !EventHandler::KeyEventListener::inputBuffer.empty()){
+                    EventHandler::KeyEventListener::inputBuffer.pop_back();   
+                }
 
             }
             
+            break;
+
+            case SDL_TEXTINPUT:
+            if(EventHandler::KeyEventListener::inputMode){
+                EventHandler::KeyEventListener::inputBuffer += e.text.text;
+            }
             break;
         }
     }

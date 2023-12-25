@@ -10,7 +10,8 @@ Login::Login(GUI::WindowManager* wm){
 }
 
 void Login::loginUI(){
-   
+
+    wm->Clear();
     // Login Box
     SDL_Rect r;
     r.h=250;
@@ -22,8 +23,6 @@ void Login::loginUI(){
 
     wm->SetText(r, "Login to Chautari", (r.w-r.x)/2 - 50, -100, {255,255,255,255}, 30);
     wm->SetText(r, "Enter a username:",(r.w - 16)/2 - 40, (r.h-16)/2 - 70, {255,255,255,255}, 16);
-
-//   wm->SetText(r, "test:",40, 40, {255,255,255,255}, 16);
 
     inputBox.h=30;
     inputBox.w= 200;
@@ -40,16 +39,12 @@ void Login::loginUI(){
    
     wm->SetText(chatNowBtn, "Chat Now", chatNowBtn.w/2 - 38, chatNowBtn.h/2 -10, {255,255,255,255}, 16);
 
-
-
-    SDL_RenderPresent(wm->renderer);
-
 }
 
 
 void Login::eventLoop(){
     while(!EventHandler::close){
-        // loginUI();
+        loginUI();
         EventHandler::listen();
         if(EventHandler::OnClickListener::clicked(inputBox)){
             std::cout << "Input mode started\n";
@@ -63,26 +58,14 @@ void Login::eventLoop(){
             break;
         }
 
-        if(EventHandler::typing){
-            for(int i = 0; i < EventHandler::KeyEventListener::inputBuffer.length(); i++){
-                // EventHandler::KeyEventListener::inputBuffer[i] = ' ';
-                std::cout << GUI::Utils::getchrptr(EventHandler::KeyEventListener::inputBuffer)[i] << '\n';
-            }
-            wm->SetText(inputBox, GUI::Utils::getchrptr(EventHandler::KeyEventListener::inputBuffer), 5, 5, {255,255,255,255}, 13);
-            EventHandler::typing = false;
-            SDL_RenderPresent(wm->renderer);
-        }
 
-        // std::cout << GUI::Utils::stringToCharPtr(EventHandler::KeyEventListener::inputBuffer) << "\n";
-        // wm->SetText(inputBox, GUI::Utils::getchrptr(EventHandler::KeyEventListener::inputBuffer), 5, 5, {255,255,255,255}, 13);
-        // wm->SetText(inputBox, "testusername", 5, 5, {255,255,255,255}, 13);
+        wm->SetText(inputBox, EventHandler::KeyEventListener::inputBuffer.c_str(), 5, 5, {255,255,255,255}, 13);
+        SDL_RenderPresent(wm->renderer);
         EventHandler::OnClickListener::c = {-1,-1};
     }
 }
 
 void Login::loginScreen(){
-
-    loginUI();
 
     eventLoop();
     
