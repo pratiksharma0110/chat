@@ -21,6 +21,16 @@ void Chautari::chautariUI(){
     messageBox.h = 1+left.h-messageBox.y;
     wm->Draw({255,255,255,255}, messageBox, false);
 
+    wm->SetText(left, "Welcome to", 20, 20, {255,255,255,255},30);
+
+    wm->SetText(left, "Digital Chautari", 20, 60, {255,255,255,255},30);
+
+    int c = 0;
+    for(auto it=connectedUsers.begin(); it!=connectedUsers.end(); it++){
+        wm->SetText(right, it->c_str(), 10, 10+30*c, {255,255,255,255}, 16);
+        c++;
+    }
+
 }
 
 void Chautari::eventLoop(){
@@ -52,19 +62,22 @@ void Chautari::chautari(){
 
     Message m1;
     m1.p = {"owl", "hlo bros k xa"};
-    m1.r.y = 30 - 50 * messages.size();
+    m1.r.y = 150 - 50 * messages.size();
     messages.push_back(m1);
 
     Message m2;
     m2.p = {"doge", "im pedo"};
-    m2.r.y = 30 - 50 * messages.size();
+    m2.r.y = 150 - 50 * messages.size();
     messages.push_back(m2);
 
     Message m3;
     m3.p = {"chad", "chi k bhaneko esto dost"};
-    m3.r.y = 30 - 50 * messages.size();
+    m3.r.y = 150 - 50 * messages.size();
     messages.push_back(m3);
 
+    connectedUsers.push_back("doge");
+    connectedUsers.push_back("chad");
+    connectedUsers.push_back("owl");
 
     eventLoop();
 
