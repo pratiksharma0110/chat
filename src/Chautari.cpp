@@ -26,6 +26,7 @@ void Chautari::chautariUI(){
 void Chautari::eventLoop(){
     while(!EventHandler::close){
         chautariUI();
+        DisplayMessages();
         EventHandler::listen();
         if(EventHandler::OnClickListener::clicked(messageBox)){
             std::cout << "Input mode started\n";
@@ -49,6 +50,48 @@ void Chautari::eventLoop(){
 
 void Chautari::chautari(){
 
+    Message m1;
+    m1.p = {"owl", "hlo bros k xa"};
+    m1.r.y = 30+ 50 * messages.size();
+    messages.push_back(m1);
+
+    Message m2;
+    m2.p = {"doge", "im pedo"};
+    m2.r.y = 30+ 50 * messages.size();
+    messages.push_back(m2);
+
+    Message m3;
+    m3.p = {"chad", "chi k bhaneko esto dost"};
+    m3.r.y = 30+ 50 * messages.size();
+    messages.push_back(m3);
+
+
     eventLoop();
 
+}
+
+void Chautari::DisplayMessages(){
+    if(!newSender.message.empty()){
+        if(messages.size() >= MAX_MESSAGES){
+
+            messages.erase(messages.begin());
+
+        }
+
+        Message m;
+        m.p = newSender;
+        m.r.y = 30 + 70 * messages.size();
+        messages.push_back(m);
+        newSender.name.clear();
+        newSender.message.clear();
+    }
+
+    // wm->Clear();
+
+    for (auto it = messages.rbegin(); it != messages.rend(); ++it) {
+        wm->SetText(messageBox, (it->p.name).c_str(), 70, -it->r.y-20, {255,255,255,255}, 16);
+        wm->SetText(messageBox, (it->p.message).c_str(), 70, -it->r.y, {255,255,255,255}, 13);
+    }
+
+    // SDL_RenderPresent(wm->renderer);
 }
