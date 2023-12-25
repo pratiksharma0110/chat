@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -10,7 +11,7 @@
 
 using namespace std;
 
-int initializeSocket(const char *servIP)
+int initializeSocket(const char *servIP,char *username)
 {
     // Create a socket
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -40,6 +41,7 @@ int initializeSocket(const char *servIP)
     }
     else
     {
+        write(clientSocket,username,20);   
         cout << "[SYSTEM] Connected to the server at " << servIP << ":" << ntohs(serverAddress.sin_port) << "\n";
     }
 
@@ -128,9 +130,10 @@ void sendMessageLoop(int clientSocket)
 int main()
 {
     const char *servIP = "127.0.0.1";
+    char username[] = {'j','o','h','n'};
 
     // Initialize socket and connect to the server
-    int clientSocket = initializeSocket(servIP);
+    int clientSocket = initializeSocket(servIP,username);
 
     if (clientSocket != -1)
     {

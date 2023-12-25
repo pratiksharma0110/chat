@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -8,7 +9,14 @@
 
 using namespace std;
 
+
 constexpr int MAX_CLIENTS = 10;
+constexpr int MAX_USERNAME = 20;
+
+typedef struct {
+    int socket;
+    char username[MAX_USERNAME]={0};
+} User;
 
 // Function to create a socket
 int createSocket()
@@ -60,32 +68,34 @@ void startListening(int socket)
 }
 
 // Function to accept a connection from a client
-int acceptConnection(int listenSocket)
+User acceptConnection(int listenSocket)
 {
     sockaddr_in clientAddress;
     socklen_t clientAddrSize = sizeof(clientAddress);
-    int clientSocket = accept(listenSocket, (struct sockaddr *)&clientAddress, &clientAddrSize);
+    User client;
+    client.socket = accept(listenSocket, (struct sockaddr *)&clientAddress, &clientAddrSize);
 
-    if (clientSocket > 0)
+    if (client.socket > 0)
     {
+        read(client.socket,client.username,20);
         cout << "[SYSTEM] Accepted connection from "
-             << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << "\n";
+             << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << "Username: " <<client.username<<endl;
     }
     else
     {
         cerr << "[SYSTEM] Error accepting connection\n";
     }
-    return clientSocket;
+    return client;
 }
 
 // Function to find the maximum socket descriptor among the listening socket and connected client sockets
-int findMaxFd(int listenSocket, int *clientSockets, fd_set &readFds)
+int findMaxFd(int listenSocket, User *clients, fd_set &readFds)
 {
     int maxFd = listenSocket;
 
     for (int i = 0; i < MAX_CLIENTS; ++i)
     {
-        int client_socket = clientSockets[i];
+        int client_socket = clients[i].socket;
         if (client_socket > 0)
         {
             // Add each connected client socket to the read set
@@ -103,10 +113,10 @@ int findMaxFd(int listenSocket, int *clientSockets, fd_set &readFds)
 }
 
 // Function to handle client sockets
-void handleClientSockets(int listenSocket, int *clientSockets, fd_set &readFds)
+void handleClientSockets(int listenSocket,  User *clients, fd_set &readFds)
 {
     // Find the maximum socket descriptor
-    int maxFd = findMaxFd(listenSocket, clientSockets, readFds);
+    int maxFd = findMaxFd(listenSocket, clients, readFds);
 
     // Use select to monitor file descriptors for readiness
     int readySock = select(maxFd + 1, &readFds, NULL, NULL, NULL);
@@ -121,13 +131,13 @@ void handleClientSockets(int listenSocket, int *clientSockets, fd_set &readFds)
         if (FD_ISSET(listenSocket, &readFds))
         {
 
-            int client_socket = acceptConnection(listenSocket);
+            User client = acceptConnection(listenSocket);
 
             for (int i = 0; i < MAX_CLIENTS; ++i)
             {
-                if (clientSockets[i] == 0)
+                if (clients[i].socket == 0)
                 {
-                    clientSockets[i] = client_socket;
+                    clients[i].socket = client.socket;
                     break;
                 }
             }
@@ -136,7 +146,7 @@ void handleClientSockets(int listenSocket, int *clientSockets, fd_set &readFds)
         // Check each client socket for readiness
         for (int i = 0; i < MAX_CLIENTS; ++i)
         {
-            int client_socket = clientSockets[i];
+            int client_socket = clients[i].socket;
             if (client_socket > 0 && FD_ISSET(client_socket, &readFds))
             {
                 // Client socket is ready for reading
@@ -149,7 +159,7 @@ void handleClientSockets(int listenSocket, int *clientSockets, fd_set &readFds)
                 {
                     // Handle disconnect or error
                     close(client_socket);
-                    clientSockets[i] = 0;
+                    clients[i].socket = 0;
                     printf("[SYSTEM] Socket %d disconnected.\n", client_socket);
                 }
                 else
@@ -162,7 +172,7 @@ void handleClientSockets(int listenSocket, int *clientSockets, fd_set &readFds)
                     {
                         // Handle disconnect or error
                         close(client_socket);
-                        clientSockets[i] = 0;
+                        clients[i].socket = 0;
                         printf("[SYSTEM] Socket %d disconnected.\n", client_socket);
                     }
                     else
@@ -173,7 +183,7 @@ void handleClientSockets(int listenSocket, int *clientSockets, fd_set &readFds)
 
                         for (int j = 0; j < MAX_CLIENTS; ++j)
                         {
-                            int dest_socket = clientSockets[j];
+                            int dest_socket = clients[j].socket;
                             if (dest_socket > 0 && dest_socket != client_socket)
                             {
                                 // Send the message to the destination client
@@ -204,7 +214,7 @@ int main()
     startListening(listenSocket);
 
     // Array to store client socket descriptors
-    int client_sockets[MAX_CLIENTS];
+    User client_sockets[MAX_CLIENTS];
     memset(client_sockets, 0, sizeof(client_sockets));
 
     while (true)
@@ -218,9 +228,9 @@ int main()
     close(listenSocket);
     for (int i = 0; i < MAX_CLIENTS; ++i)
     {
-        if (client_sockets[i] > 0)
+        if (client_sockets[i].socket > 0)
         {
-            close(client_sockets[i]);
+            close(client_sockets[i].socket);
         }
     }
 
