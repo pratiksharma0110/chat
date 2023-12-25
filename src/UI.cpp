@@ -43,44 +43,46 @@ void GUI::WindowManager::Draw(color c, SDL_Rect r, bool fill){
 
 
 void GUI::WindowManager::SetText(SDL_Rect parent, const char* text, int x, int y, SDL_Color c, int fontSize){
-    if (!font13 || !font16 || !font30) {
-        std::cerr << "TTF_OpenFont Error: " << TTF_GetError() << std::endl;
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        TTF_Quit();
-        SDL_Quit();
+    if(text[0] != '\0'){
+        if (!font13 || !font16 || !font30) {
+            std::cerr << "TTF_OpenFont Error: " << TTF_GetError() << std::endl;
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(window);
+            TTF_Quit();
+            SDL_Quit();
+        }
+        SDL_Color bg = {0,0,0,0};
+        TTF_Font* font;
+        switch(fontSize){
+            case 13:
+            font = font13;
+            break;
+
+            case 16:
+            font = font16;
+            break;
+
+            case 30:
+            font=font30;
+            break;
+        }
+        SDL_Surface* textSurface = TTF_RenderText_Solid(font, (const char*)text, c);
+        
+        if (!textSurface) {
+            std::cerr << "TTF_RenderText_Solid Error: " << TTF_GetError() << std::endl;
+            TTF_CloseFont(font);
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(window);
+            TTF_Quit();
+            SDL_Quit();
+        }
+        SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+
+        SDL_FreeSurface(textSurface);
+        SDL_Rect destRect = {parent.x + x, parent.y + y, textSurface->w, textSurface->h};
+
+        SDL_RenderCopy(renderer, textTexture, nullptr, &destRect);
     }
-    SDL_Color bg = {0,0,0,0};
-    TTF_Font* font;
-    switch(fontSize){
-        case 13:
-        font = font13;
-        break;
-
-        case 16:
-        font = font16;
-        break;
-
-        case 30:
-        font=font30;
-        break;
-    }
-    SDL_Surface* textSurface = TTF_RenderText_Solid(font, (const char*)text, c);
-    
-    if (!textSurface) {
-        std::cerr << "TTF_RenderText_Solid Error: " << TTF_GetError() << std::endl;
-        TTF_CloseFont(font);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        TTF_Quit();
-        SDL_Quit();
-    }
-    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-
-    SDL_FreeSurface(textSurface);
-    SDL_Rect destRect = {parent.x + x, parent.y + y, textSurface->w, textSurface->h};
-
-    SDL_RenderCopy(renderer, textTexture, nullptr, &destRect);
 }
 
 void GUI::WindowManager::Clear(){
