@@ -4,6 +4,7 @@
 SDL_Rect chatNowBtn;
 SDL_Rect inputBox;
 
+std::string username;
 
 Login::Login(GUI::WindowManager* wm){
     this->wm = wm;
@@ -53,6 +54,7 @@ void Login::eventLoop(){
         if(EventHandler::OnClickListener::clicked(chatNowBtn)){
             std::cout << "Your username: ";
             std::cout << EventHandler::KeyEventListener::inputBuffer << "\n";
+            username=EventHandler::KeyEventListener::inputBuffer;
             EventHandler::KeyEventListener::inputBuffer = " ";
             EventHandler::KeyEventListener::inputMode = false;
             break;
@@ -69,6 +71,6 @@ void Login::loginScreen(){
 
     eventLoop();
     
-    (new Chautari(wm, EventHandler::KeyEventListener::inputBuffer))->chautari();
+    (new Chautari(wm, username))->chautari();
 
 }

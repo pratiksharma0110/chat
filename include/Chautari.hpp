@@ -25,6 +25,8 @@ class Chautari{
 
     std::vector<std::string> connectedUsers;
 
+    
+
     Chautari(GUI::WindowManager* wm, std::string username);
     void chautari();
     void eventLoop();
