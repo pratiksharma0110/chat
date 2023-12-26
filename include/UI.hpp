@@ -22,6 +22,7 @@ typedef struct{
     int x, y;
 } coord;
 
+extern bool sendMode;
 
 namespace GUI{
 

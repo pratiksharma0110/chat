@@ -3,6 +3,8 @@
 
 TTF_Font* font13, *font16, *font30;
 
+bool sendMode = false;
+
 namespace EventHandler {
     bool close = false;
     SDL_Event e;
@@ -113,6 +115,7 @@ void EventHandler::listen(){
 
             case SDL_KEYDOWN:
             if(e.key.keysym.sym == SDLK_RETURN){
+                sendMode = true;
                 EventHandler::KeyEventListener::inputMode = false;
             }
             else{

@@ -1,21 +1,15 @@
 #include "Chautari.hpp"
 
+#include "clienthandler.hpp"
 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <cstring>
-#include <sys/select.h>
-#include <signal.h>
-
-#define servPORT 8080
-
-const char *servIP = "127.0.0.1";
-int clientSocket;
+#include <thread>
 
 SDL_Rect messageBox, left, right, sendBtn;
+
+fd_set readFds;
+int clientSocket;
+
+char recvbuffer[1024];
 
 Chautari::Chautari(GUI::WindowManager* wm, std::string username){
     this->wm  = wm;
@@ -49,9 +43,57 @@ void Chautari::chautariUI(){
 
 }
 
+void networkThread(int socketDescriptor, bool& quit) {
+    while (!quit) {
+        // Receive data from the socket
+        // ssize_t bytesReceived = recv(socketDescriptor, recvbuffer, sizeof(recvbuffer) - 1, 0);
+        // if (bytesReceived <= 0) {
+        //     // Handle disconnection or error
+        //     std::cout << "Connection closed or error occurred.\n";
+        //     quit = true;
+        //     break;
+        // }
+        size_t messageLen;
+    int lenBytesRead = recv(clientSocket, &messageLen, sizeof(messageLen), 0);
+
+    if (lenBytesRead <= 0)
+    {
+        std::cerr << "[SYSTEM] Server disconnected.\n";
+
+    }
+    else
+    {
+
+        int bytesRead = recv(clientSocket, recvbuffer, messageLen, 0);
+
+        if (bytesRead <= 0)
+        {
+            std::cerr << "[SYSTEM] Server disconnected.\n";
+        }
+        else
+        {
+            recvbuffer[bytesRead] = '\0';
+            // pid_t pid = getpid();
+            // kill(pid, SIGUSR1);
+        }
+    }
+
+ // Null-terminate the received data
+        std::cout << "Received: " << recvbuffer << std::endl;
+    }
+}
+
 void Chautari::eventLoop(){
     while(!EventHandler::close){
         chautariUI();
+        if(recvbuffer[0] != '\0'){
+            std::string bfr(recvbuffer);
+            Message m;
+            m.p = {"doge", bfr};
+            m.r.y = 150 - 50 * messages.size();
+            messages.push_back(m);
+            recvbuffer[0] = '\0';
+        }
         DisplayMessages();
         EventHandler::listen();
         if(EventHandler::OnClickListener::clicked(messageBox)){
@@ -59,9 +101,13 @@ void Chautari::eventLoop(){
             EventHandler::KeyEventListener::inputMode = true;
         }
         if(EventHandler::OnClickListener::clicked(sendBtn)){
+            break;
+        }
+        if(sendMode){
+            sendMessage(clientSocket, const_cast<char*>(EventHandler::KeyEventListener::inputBuffer.data()));
             EventHandler::KeyEventListener::inputBuffer = " ";
             EventHandler::KeyEventListener::inputMode = false;
-            break;
+            sendMode = false;
         }
 
 
@@ -73,44 +119,6 @@ void Chautari::eventLoop(){
     }
     
 }
-
-int initializeSocket(const char *servIP,char *username)
-{
-    // Create a socket
-    int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-
-    if (clientSocket == -1)
-    {
-        std::cerr << "[SYSTEM] Error creating socket\n";
-        return -1;
-    }
-    else
-    {
-        std::cout << "[SYSTEM] Socket Created Successfully\n";
-    }
-
-    // Set up the address family
-    sockaddr_in serverAddress;
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(servPORT);
-    serverAddress.sin_addr.s_addr = inet_addr(servIP);
-
-    // Connect to the server
-    if (connect(clientSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
-    {
-        std::cerr << "[SYSTEM] Error connecting to the server\n";
-        close(clientSocket);
-        return -1;
-    }
-    else
-    {
-        write(clientSocket,username,20);   
-        std::cout << "[SYSTEM] Connected to the server at " << servIP << ":" << ntohs(serverAddress.sin_port) << "\n";
-    }
-
-    return clientSocket;
-}
-
 
 void Chautari::chautari(){
 
@@ -134,12 +142,22 @@ void Chautari::chautari(){
     // connectedUsers.push_back("owl");
 
 
-    std::cout << "rcvd from login: " << username << "\n";
+    // std::cout << "rcvd from login: " << username << "\n";
 
-    std::cout << "cast test: " << const_cast<char*>(username.data());
-    clientSocket = initializeSocket(servIP,const_cast<char*>(username.data()));
+    // std::cout << "cast test: " << const_cast<char*>(username.data());
+
+    // std::thread networkThread(networkThread, clientSocket, std::ref(EventHandler::close));
+    std::thread nT(networkThread, clientSocket, std::ref(EventHandler::close));
+
+    if(join(const_cast<char*>(username.data())) != -1){
+        FD_ZERO(&readFds);
+        FD_SET(clientSocket, &readFds);
+        FD_SET(STDIN_FILENO, &readFds);
+    }
 
     eventLoop();
+
+    nT.join();
 
 }
 
