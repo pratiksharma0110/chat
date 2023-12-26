@@ -5,8 +5,20 @@
 
 While in the project folder,
 
-`g++ src/*.cpp -I include/ -lSDL2 -lSDL2_ttf -o bin/doge`
+* First compile the server
+
+`g++ src/networking/multiClientServ.cpp -o bin/server`
+
+* Now compile the client
+
+`g++ src/*.cpp src/networking/clienthandler.cpp -I include/ -lSDL2 -lSDL2_ttf -o bin/doge`
 
 # Run
+
+* Run the server
+
+`./bin/server`
+
+* Run the client
 
 `./bin/doge`
