@@ -18,6 +18,53 @@ typedef struct {
     char username[MAX_USERNAME]={0};
 } User;
 
+
+//Function to receive client messages
+void recvMsg(int client_socket,User *clients,int i){
+    // First, receive the message length
+    size_t messageLen;
+    int lenBytesRead = recv(client_socket, &messageLen, sizeof(messageLen), 0);
+
+    if (lenBytesRead <= 0)
+    {
+        // Handle disconnect or error
+        close(client_socket);
+        clients[i].socket = 0;
+        printf("[SYSTEM] Socket %d disconnected.\n", client_socket);
+    }
+    else
+    {
+        // Now, receive the actual message based on the received length
+        char buffer[1024];
+        int bytesRead = recv(client_socket, buffer, messageLen, 0);
+
+        if (bytesRead <= 0)
+        {
+            // Handle disconnect or error
+            close(client_socket);
+            clients[i].socket = 0;
+            printf("[SYSTEM] Socket %d disconnected.\n", client_socket);
+        }
+        else
+        {
+            // Process received data
+            buffer[bytesRead] = '\0'; // Null-terminate the received data
+            cout << "[SYSTEM] Received data from socket " << client_socket << ": " << buffer << endl;
+
+            for (int j = 0; j < MAX_CLIENTS; ++j)
+            {
+                int dest_socket = clients[j].socket;
+                if (dest_socket > 0)
+                {
+                    // Send the message to the destination client
+                    send(dest_socket, &messageLen, sizeof(messageLen), 0);
+                    send(dest_socket, buffer, messageLen, 0);
+                }
+            }
+        }
+    }
+}
+
 // Function to create a socket
 int createSocket()
 {
@@ -68,7 +115,7 @@ void startListening(int socket)
 }
 
 // Function to accept a connection from a client
-User acceptConnection(int listenSocket)
+User acceptConnection(int listenSocket,User *clients)
 {
     sockaddr_in clientAddress;
     socklen_t clientAddrSize = sizeof(clientAddress);
@@ -77,7 +124,47 @@ User acceptConnection(int listenSocket)
 
     if (client.socket > 0)
     {
-        read(client.socket,client.username,20);
+        //read(client.socket,client.username,20);
+        size_t messageLen;
+        int lenBytesRead = recv(client.socket, &messageLen, sizeof(messageLen), 0);
+
+        if (lenBytesRead <= 0)
+        {
+            // Handle disconnect or error
+            close(client.socket);
+            clients[client.socket-4].socket = 0;
+            printf("[SYSTEM] Socket %d disconnected.\n", client.socket);
+        }
+        else
+        {
+            // Now, receive the actual message based on the received length
+            char buffer[1024];
+            int bytesRead = recv(client.socket, buffer, messageLen, 0);
+
+            if (bytesRead <= 0)
+            {
+                // Handle disconnect or error
+                close(client.socket);
+                clients[client.socket-4].socket = 0;
+                printf("[SYSTEM] Socket %d disconnected.\n", client.socket);
+            }
+            else
+            {
+                // Process received data
+                buffer[bytesRead] = '\0'; // Null-terminate the received data
+                strcpy(client.username,buffer);
+                for (int j = 0; j < MAX_CLIENTS; ++j)
+                {
+                    int dest_socket = clients[j].socket;
+                    if (dest_socket > 0)
+                    {
+                        // Send the message to the destination client
+                        send(dest_socket, &messageLen, sizeof(messageLen), 0);
+                        send(dest_socket, buffer, messageLen, 0);
+                    }
+                }
+            }
+        }
         cout << "[SYSTEM] Accepted connection from "
              << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << "Username: " <<client.username<<endl;
 
@@ -133,7 +220,7 @@ void handleClientSockets(int listenSocket,  User *clients, fd_set &readFds)
         if (FD_ISSET(listenSocket, &readFds))
         {
 
-            User client = acceptConnection(listenSocket);
+            User client = acceptConnection(listenSocket,clients);
 
             for (int i = 0; i < MAX_CLIENTS; ++i)
             {
@@ -151,50 +238,7 @@ void handleClientSockets(int listenSocket,  User *clients, fd_set &readFds)
             int client_socket = clients[i].socket;
             if (client_socket > 0 && FD_ISSET(client_socket, &readFds))
             {
-                // Client socket is ready for reading
-
-                // First, receive the message length
-                size_t messageLen;
-                int lenBytesRead = recv(client_socket, &messageLen, sizeof(messageLen), 0);
-
-                if (lenBytesRead <= 0)
-                {
-                    // Handle disconnect or error
-                    close(client_socket);
-                    clients[i].socket = 0;
-                    printf("[SYSTEM] Socket %d disconnected.\n", client_socket);
-                }
-                else
-                {
-                    // Now, receive the actual message based on the received length
-                    char buffer[1024];
-                    int bytesRead = recv(client_socket, buffer, messageLen, 0);
-
-                    if (bytesRead <= 0)
-                    {
-                        // Handle disconnect or error
-                        close(client_socket);
-                        clients[i].socket = 0;
-                        printf("[SYSTEM] Socket %d disconnected.\n", client_socket);
-                    }
-                    else
-                    {
-                        // Process received data
-                        buffer[bytesRead] = '\0'; // Null-terminate the received data
-                        cout << "[SYSTEM] Received data from socket " << client_socket << ": " << buffer << endl;
-
-                        for (int j = 0; j < MAX_CLIENTS; ++j)
-                        {
-                            int dest_socket = clients[j].socket;
-                            if (dest_socket > 0)
-                            {
-                                // Send the message to the destination client
-                                send(dest_socket, &messageLen, sizeof(messageLen), 0);
-                                send(dest_socket, buffer, messageLen, 0);
-                            }
-                        }
-                    }
-                }
+                recvMsg(client_socket,clients,i);
             }
         }
     }
