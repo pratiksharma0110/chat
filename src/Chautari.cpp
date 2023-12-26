@@ -3,6 +3,7 @@
 #include "clienthandler.hpp"
 
 #include <thread>
+#include <algorithm>
 
 SDL_Rect messageBox, left, right, sendBtn;
 
@@ -11,9 +12,44 @@ int clientSocket;
 
 char recvbuffer[1024];
 
+std::string recvUsername, recvMsgBfr;
+std::string type;
+
+std::vector<std::string> connectedUsers;
+
 Chautari::Chautari(GUI::WindowManager* wm, std::string username){
     this->wm  = wm;
     this->username = username;
+}
+
+void splitter(){
+    std::string rcvbfr(recvbuffer);
+    size_t colonPosition = rcvbfr.find(':');
+    if (colonPosition != std::string::npos) {
+        std::string substring = rcvbfr.substr(0, colonPosition);
+        std::string restOfString = rcvbfr.substr(colonPosition + 1);
+
+        type = substring;
+
+        if(type == "UNAME"){
+                recvUsername = restOfString;
+                recvMsgBfr = "";
+        }
+        else if(type == "MSG"){
+             size_t colonPosition2 = restOfString.find(':');
+             std::string substring2 = restOfString.substr(0, colonPosition2);
+             recvUsername = substring2;
+             recvMsgBfr = restOfString.substr(colonPosition2 + 1);
+        }
+    }
+
+}
+
+void updateUsers(std::vector<std::string>& list, const std::string& username) {
+    if (!username.empty() && std::find(list.begin(), list.end(), username) == list.end()) {
+        std::cout << "user online detected: " << username <<"\n";
+        list.push_back(username);
+    } 
 }
 
 void Chautari::chautariUI(){
@@ -43,22 +79,16 @@ void Chautari::chautariUI(){
 
 }
 
-void networkThread(int socketDescriptor, bool& quit) {
-    while (!quit) {
-        // Receive data from the socket
-        // ssize_t bytesReceived = recv(socketDescriptor, recvbuffer, sizeof(recvbuffer) - 1, 0);
-        // if (bytesReceived <= 0) {
-        //     // Handle disconnection or error
-        //     std::cout << "Connection closed or error occurred.\n";
-        //     quit = true;
-        //     break;
-        // }
+void networkThread(int socketDescriptor) {
+    while (!EventHandler::close) {
+        EventHandler::listen();
         size_t messageLen;
     int lenBytesRead = recv(clientSocket, &messageLen, sizeof(messageLen), 0);
 
     if (lenBytesRead <= 0)
     {
-        std::cerr << "[SYSTEM] Server disconnected.\n";
+
+        perror("error: ");
 
     }
     else
@@ -68,10 +98,13 @@ void networkThread(int socketDescriptor, bool& quit) {
 
         if (bytesRead <= 0)
         {
-            std::cerr << "[SYSTEM] Server disconnected.\n";
+            perror("error: ");
+            // exit(2);
         }
         else
         {
+            splitter();
+            updateUsers(connectedUsers, recvUsername);
             recvbuffer[bytesRead] = '\0';
             // pid_t pid = getpid();
             // kill(pid, SIGUSR1);
@@ -86,13 +119,33 @@ void networkThread(int socketDescriptor, bool& quit) {
 void Chautari::eventLoop(){
     while(!EventHandler::close){
         chautariUI();
+        // updateUsers(connectedUsers, recvUsername);
         if(recvbuffer[0] != '\0'){
             std::string bfr(recvbuffer);
-            Message m;
-            m.p = {"doge", bfr};
-            m.r.y = 150 - 50 * messages.size();
-            messages.push_back(m);
-            recvbuffer[0] = '\0';
+            // splitter();
+            if(type == "MSG"){
+                Message m;
+                m.p = {recvUsername, recvMsgBfr};
+                // m.r.y = 150 - 50 * messages.size();
+                if(messages.size()>0){
+                    std::cout << messages.begin()->p.message << " = begin \n";
+                    std::cout << (messages.end()-1)->p.message << " = end-1\n";
+                    m.r.y = (messages.end()-1)->r.y;
+                    std::cout << m.r.y <<"\n";
+                    for(auto it = messages.begin(); it != messages.end(); it++){
+                        it->r.y+=50;
+                    }
+                }
+                else{
+                    std::cout << "first msg\n";
+                    m.r.y = 150;
+                }
+                messages.push_back(m);
+                recvbuffer[0] = '\0';
+            }
+            else{
+                // std::cout << recvUsername << " joined\n";
+            }
         }
         DisplayMessages();
         EventHandler::listen();
@@ -104,7 +157,9 @@ void Chautari::eventLoop(){
             break;
         }
         if(sendMode){
-            sendMessage(clientSocket, const_cast<char*>(EventHandler::KeyEventListener::inputBuffer.data()));
+            if(EventHandler::KeyEventListener::inputBuffer != " " && !EventHandler::KeyEventListener::inputBuffer.empty()){
+                sendMessage(clientSocket, const_cast<char*>(EventHandler::KeyEventListener::inputBuffer.data()), const_cast<char*>(username.data()), NORMAL_MSG);
+            }
             EventHandler::KeyEventListener::inputBuffer = " ";
             EventHandler::KeyEventListener::inputMode = false;
             sendMode = false;
@@ -147,16 +202,21 @@ void Chautari::chautari(){
     // std::cout << "cast test: " << const_cast<char*>(username.data());
 
     // std::thread networkThread(networkThread, clientSocket, std::ref(EventHandler::close));
-    std::thread nT(networkThread, clientSocket, std::ref(EventHandler::close));
+    // std::thread nT(networkThread, clientSocket, std::ref(EventHandler::close));
 
     if(join(const_cast<char*>(username.data())) != -1){
+        std::cout << "success!";
         FD_ZERO(&readFds);
         FD_SET(clientSocket, &readFds);
         FD_SET(STDIN_FILENO, &readFds);
     }
+    else{
+        std::cout <<"join bhayena\n";
+    } 
+    
+    std::thread nT(networkThread, clientSocket);
 
     eventLoop();
-
     nT.join();
 
 }
@@ -171,7 +231,7 @@ void Chautari::DisplayMessages(){
 
         Message m;
         m.p = newSender;
-        m.r.y = 30 + 70 * messages.size();
+        m.r.y = 30-70 * messages.size();
         messages.push_back(m);
         newSender.name.clear();
         newSender.message.clear();
@@ -179,7 +239,7 @@ void Chautari::DisplayMessages(){
 
     // wm->Clear();
 
-    for (auto it = messages.rbegin(); it != messages.rend(); ++it) {
+    for (auto it = messages.begin(); it != messages.end(); ++it) {
         wm->SetText(messageBox, (it->p.name).c_str(), 70, -it->r.y-20, {255,255,255,255}, 16);
         wm->SetText(messageBox, (it->p.message).c_str(), 70, -it->r.y, {255,255,255,255}, 13);
     }

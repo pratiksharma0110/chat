@@ -9,7 +9,7 @@
 #include <sys/select.h>
 #include <signal.h>
 
-#define servPORT 8080
+#define servPORT 4444
 
 #define UNAME_BROADCAST 1
 #define NORMAL_MSG 2

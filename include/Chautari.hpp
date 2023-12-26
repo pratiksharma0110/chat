@@ -14,6 +14,7 @@ struct Message{
     SDL_Rect r;
 };
 
+extern std::vector<std::string> connectedUsers;
 
 class Chautari{
     public:
@@ -23,7 +24,6 @@ class Chautari{
     std::vector<Message> messages;
     Profile newSender;
 
-    std::vector<std::string> connectedUsers;
 
     
 

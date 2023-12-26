@@ -162,6 +162,14 @@ User acceptConnection(int listenSocket,User *clients)
                         send(dest_socket, &messageLen, sizeof(messageLen), 0);
                         send(dest_socket, buffer, messageLen, 0);
                     }
+
+                     if(clients[j].username){
+                        // char msg[10 + MAX_USERNAME] = "UNAME:";
+                        // strcat(msg, clients[j].username);
+                        size_t len = strlen(clients[j].username);
+                        send(client.socket, &len, sizeof(len), 0);
+                        send(client.socket, clients[j].username, len, 0);
+                    }
                 }
             }
         }
@@ -227,6 +235,7 @@ void handleClientSockets(int listenSocket,  User *clients, fd_set &readFds)
                 if (clients[i].socket == 0)
                 {
                     clients[i].socket = client.socket;
+                    strcpy(clients[i].username, client.username);
                     break;
                 }
             }
@@ -256,7 +265,7 @@ int main()
     FD_SET(listenSocket, &masterFds);
 
     // Bind the socket to a specific IP address and port, then start listening
-    bindSocket(listenSocket, servIP, 8080);
+    bindSocket(listenSocket, servIP, 4444);
     startListening(listenSocket);
 
     // Array to store client socket descriptors
