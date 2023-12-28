@@ -1,18 +1,17 @@
 #include "UI.hpp"
 
-
+// Adding 4 different font sizes
 TTF_Font* font13, *font16, *font20, *font30;
 
-bool sendMode = false;
+bool sendMode = false;  // Initializing sendMode to false (Purpose of this boolean is in the header)
 
+// Initializing some variables
 namespace EventHandler {
     bool close = false;
     SDL_Event e;
-    coord OnClickListener::c = {-1,-1};
+    coord OnClickListener::c = {-1,-1}; // Initializing c to -1,-1 to represent that no mouse click as occured (-1,-1 being outside of screen)
     bool KeyEventListener::inputMode = false;
     std::string KeyEventListener::inputBuffer = " ";
-    SDL_Rect inputBox = {0,0,0,0};
-    bool typing = false;
 }
 
 void GUI::WindowManager::CreateWindow(){
@@ -110,31 +109,30 @@ void EventHandler::listen(){
 
         switch (EventHandler::e.type)
         {
-            case SDL_QUIT:
-            close = true;
+            case SDL_QUIT:  // e.type == SDL_QUIT when close window [X] button is pressed
             break;
 
-            case SDL_MOUSEBUTTONDOWN:
-            EventHandler::OnClickListener::c = {e.button.x, e.button.y};
+            case SDL_MOUSEBUTTONDOWN:   // e.type == SDL_MOUSEBUTTONDOWN when mouse click is detected
+            EventHandler::OnClickListener::c = {e.button.x, e.button.y};    // Storing the co-ordinates of mouse click in 'c'
             break;
 
-            case SDL_KEYDOWN:
-            if(e.key.keysym.sym == SDLK_RETURN){
+            case SDL_KEYDOWN:   // When a keyboard button is pressed
+            if(e.key.keysym.sym == SDLK_RETURN){ // if enter pressed
                 sendMode = true;
                 EventHandler::KeyEventListener::inputMode = false;
             }
-            else{
+            else{ // if the pressed button is something other than enter
 
                 if(e.key.keysym.sym == SDLK_BACKSPACE && !EventHandler::KeyEventListener::inputBuffer.empty()){
-                    EventHandler::KeyEventListener::inputBuffer.pop_back();   
+                    EventHandler::KeyEventListener::inputBuffer.pop_back();   // if backspace pressed then remove the last character from input buffer
                 }
 
             }
             
             break;
 
-            case SDL_TEXTINPUT:
-            if(EventHandler::KeyEventListener::inputMode){
+            case SDL_TEXTINPUT: // if a series of keys detected
+            if(EventHandler::KeyEventListener::inputMode){ // if input mode is true then append the keystrokes into input buffer
                 EventHandler::KeyEventListener::inputBuffer += e.text.text;
             }
             break;

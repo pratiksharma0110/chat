@@ -1,21 +1,19 @@
 #include "Chautari.hpp"
-
 #include "clienthandler.hpp"
 
 #include <thread>
 #include <algorithm>
 #include <SDL2/SDL_image.h>
 
-
 SDL_Rect messageBox, left, right, sendBtn;
 
 fd_set readFds;
 int clientSocket;
 
-char recvbuffer[1024];
+char recvbuffer[1024];  // Holds all types of broadcasts from the server (messages, joined users, etc.)
 
-std::string recvUsername, recvMsgBfr;
-std::string type;
+std::string recvUsername, recvMsgBfr;   // Holds username and message of a message sender
+std::string type;   // holds type of message
 
 std::vector<std::string> connectedUsers;
 std::vector<Message> messages;
@@ -256,27 +254,11 @@ void Chautari::chautari(){
 }
 
 void Chautari::DisplayMessages(){
-    if(!newSender.message.empty()){
-        if(messages.size() >= MAX_MESSAGES){
 
-            messages.erase(messages.begin());
-
-        }
-
-        Message m;
-        m.p = newSender;
-        m.r.y = 30-70 * messages.size();
-        messages.push_back(m);
-        newSender.name.clear();
-        newSender.message.clear();
-    }
-
-    // wm->Clear();
 
     for (auto it = messages.begin(); it != messages.end(); ++it) {
         wm->SetText(messageBox, (it->p.name).c_str(), 70, -it->r.y-20, {255,255,255,255}, 20);
         wm->SetText(messageBox, (it->p.message).c_str(), 70, -it->r.y, {255,255,255,255}, 16);
     }
 
-    // SDL_RenderPresent(wm->renderer);
 }
