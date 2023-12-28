@@ -15,13 +15,13 @@ struct Message{
 };
 
 extern std::vector<std::string> connectedUsers;
+extern std::vector<Message> messages;
 
 class Chautari{
     public:
     std::string username;
     GUI::WindowManager* wm;
 
-    std::vector<Message> messages;
     Profile newSender;
 
 

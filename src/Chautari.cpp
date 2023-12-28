@@ -4,6 +4,8 @@
 
 #include <thread>
 #include <algorithm>
+#include <SDL2/SDL_image.h>
+
 
 SDL_Rect messageBox, left, right, sendBtn;
 
@@ -16,6 +18,9 @@ std::string recvUsername, recvMsgBfr;
 std::string type;
 
 std::vector<std::string> connectedUsers;
+std::vector<Message> messages;
+
+SDL_Texture* imageTexture;
 
 Chautari::Chautari(GUI::WindowManager* wm, std::string username){
     this->wm  = wm;
@@ -68,7 +73,19 @@ void Chautari::chautariUI(){
 
     wm->SetText(left, "Welcome to", 20, 20, {255,255,255,255},30);
 
+
     wm->SetText(left, "Digital Chautari", 20, 60, {255,255,255,255},30);
+
+    SDL_Rect image;
+    image.x = 75;
+    image.y = 200;
+    image.w = 200;
+    image.h = 200;
+
+
+
+    SDL_RenderCopy(wm->renderer, imageTexture, nullptr, &image);
+
 
 
     int c = 0;
@@ -77,52 +94,14 @@ void Chautari::chautariUI(){
         c++;
     }
 
+    
+
 }
 
-void networkThread(int socketDescriptor) {
-    while (!EventHandler::close) {
-        EventHandler::listen();
-        size_t messageLen;
-    int lenBytesRead = recv(clientSocket, &messageLen, sizeof(messageLen), 0);
-
-    if (lenBytesRead <= 0)
-    {
-
-        perror("error: ");
-
-    }
-    else
-    {
-
-        int bytesRead = recv(clientSocket, recvbuffer, messageLen, 0);
-
-        if (bytesRead <= 0)
-        {
-            perror("error: ");
-            // exit(2);
-        }
-        else
-        {
-            splitter();
-            updateUsers(connectedUsers, recvUsername);
-            recvbuffer[bytesRead] = '\0';
-            // pid_t pid = getpid();
-            // kill(pid, SIGUSR1);
-        }
-    }
-
- // Null-terminate the received data
-        std::cout << "Received: " << recvbuffer << std::endl;
-    }
-}
-
-void Chautari::eventLoop(){
-    while(!EventHandler::close){
-        chautariUI();
-        // updateUsers(connectedUsers, recvUsername);
-        if(recvbuffer[0] != '\0'){
+void messageUpdate(){
+    if(recvbuffer[0] != '\0'){
             std::string bfr(recvbuffer);
-            // splitter();
+            splitter();
             if(type == "MSG"){
                 Message m;
                 m.p = {recvUsername, recvMsgBfr};
@@ -145,8 +124,58 @@ void Chautari::eventLoop(){
             }
             else{
                 // std::cout << recvUsername << " joined\n";
+                recvbuffer[0] = '\0';
             }
         }
+        recvMsgBfr = "";
+}
+
+
+void networkThread(int socketDescriptor) {
+    while (!EventHandler::close) {
+        EventHandler::listen();
+        size_t messageLen;
+    int lenBytesRead = recv(clientSocket, &messageLen, sizeof(messageLen), 0);
+
+    if (lenBytesRead <= 0)
+    {
+
+        perror("error: ");
+
+    }
+    else
+    {
+
+        int bytesRead = recv(clientSocket, recvbuffer, messageLen, 0);
+
+        if (bytesRead <= 0)
+        {
+            perror("error: ");
+            // recvbuffer[bytesRead] = '\0';
+            // exit(2);
+        }
+        else
+        {
+            // splitter();
+            recvbuffer[bytesRead] = '\0';
+            messageUpdate();
+            updateUsers(connectedUsers, recvUsername);
+            // pid_t pid = getpid();
+            // kill(pid, SIGUSR1);
+        }
+    }
+
+ // Null-terminate the received data
+        std::cout << "Received: " << recvbuffer << std::endl;
+    }
+}
+
+
+void Chautari::eventLoop(){
+    while(!EventHandler::close){
+        chautariUI();
+        // updateUsers(connectedUsers, recvUsername);
+
         DisplayMessages();
         EventHandler::listen();
         if(EventHandler::OnClickListener::clicked(messageBox)){
@@ -177,32 +206,37 @@ void Chautari::eventLoop(){
 
 void Chautari::chautari(){
 
-    // Message m1;
-    // m1.p = {"owl", "hlo bros k xa"};
-    // m1.r.y = 150 - 50 * messages.size();
-    // messages.push_back(m1);
+        if (IMG_Init(IMG_INIT_PNG) != IMG_INIT_PNG) {
+		std::cerr << "SDL_image initialization failed: " << IMG_GetError() << std::endl;
+		SDL_DestroyRenderer(wm->renderer);
+		SDL_DestroyWindow(wm->window);
+		SDL_Quit();
+    }
 
-    // Message m2;
-    // m2.p = {"doge", "im pedo"};
-    // m2.r.y = 150 - 50 * messages.size();
-    // messages.push_back(m2);
+    // Load image
+    SDL_Surface* imageSurface = IMG_Load("/home/protikbruhh/Desktop/chat/static/Chautari_logo.png");
+    if (imageSurface == nullptr) {
+        std::cerr << "Failed to load image: " << IMG_GetError() << std::endl;
+        IMG_Quit();
+        SDL_DestroyRenderer(wm->renderer);
+        SDL_DestroyWindow(wm->window);
+        SDL_Quit();
+        
+    }
+    
+        // Create texture from the surface
+    imageTexture = SDL_CreateTextureFromSurface(wm->renderer, imageSurface);
+    SDL_FreeSurface(imageSurface); // Free the surface as it is no longer needed
 
-    // Message m3;
-    // m3.p = {"chad", "chi k bhaneko esto dost"};
-    // m3.r.y = 150 - 50 * messages.size();
-    // messages.push_back(m3);
-
-    // connectedUsers.push_back("doge");
-    // connectedUsers.push_back("chad");
-    // connectedUsers.push_back("owl");
-
-
-    // std::cout << "rcvd from login: " << username << "\n";
-
-    // std::cout << "cast test: " << const_cast<char*>(username.data());
-
-    // std::thread networkThread(networkThread, clientSocket, std::ref(EventHandler::close));
-    // std::thread nT(networkThread, clientSocket, std::ref(EventHandler::close));
+    if (imageTexture == nullptr) {
+        std::cerr << "Failed to create texture from image: " << SDL_GetError() << std::endl;
+        IMG_Quit();
+        SDL_DestroyRenderer(wm->renderer);
+        SDL_DestroyWindow(wm->window);
+        SDL_Quit();
+    
+    }
+    
 
     if(join(const_cast<char*>(username.data())) != -1){
         std::cout << "success!";
@@ -211,7 +245,7 @@ void Chautari::chautari(){
         FD_SET(STDIN_FILENO, &readFds);
     }
     else{
-        std::cout <<"join bhayena\n";
+        std::cout <<"Error connectint to server\n";
     } 
     
     std::thread nT(networkThread, clientSocket);
@@ -240,8 +274,8 @@ void Chautari::DisplayMessages(){
     // wm->Clear();
 
     for (auto it = messages.begin(); it != messages.end(); ++it) {
-        wm->SetText(messageBox, (it->p.name).c_str(), 70, -it->r.y-20, {255,255,255,255}, 16);
-        wm->SetText(messageBox, (it->p.message).c_str(), 70, -it->r.y, {255,255,255,255}, 13);
+        wm->SetText(messageBox, (it->p.name).c_str(), 70, -it->r.y-20, {255,255,255,255}, 20);
+        wm->SetText(messageBox, (it->p.message).c_str(), 70, -it->r.y, {255,255,255,255}, 16);
     }
 
     // SDL_RenderPresent(wm->renderer);

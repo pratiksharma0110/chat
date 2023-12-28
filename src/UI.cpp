@@ -1,7 +1,7 @@
 #include "UI.hpp"
 
 
-TTF_Font* font13, *font16, *font30;
+TTF_Font* font13, *font16, *font20, *font30;
 
 bool sendMode = false;
 
@@ -27,6 +27,7 @@ void GUI::WindowManager::CreateWindow(){
 
     font13 = TTF_OpenFont(FONT, 13);    
     font16 = TTF_OpenFont(FONT, 16);    
+    font20 = TTF_OpenFont(FONT, 20);
     font30 = TTF_OpenFont(FONT, 30);    
 
     window = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
@@ -58,6 +59,10 @@ void GUI::WindowManager::SetText(SDL_Rect parent, const char* text, int x, int y
         switch(fontSize){
             case 13:
             font = font13;
+            break;
+
+            case 20:
+            font = font20;
             break;
 
             case 16:

@@ -22,8 +22,8 @@ void Login::loginUI(){
     color c = {255, 255, 255, 0};
     wm->Draw(c, r, false);
 
-    wm->SetText(r, "Login to Chautari", (r.w-r.x)/2 - 50, -100, {255,255,255,255}, 30);
-    wm->SetText(r, "Enter a username:",(r.w - 16)/2 - 40, (r.h-16)/2 - 70, {255,255,255,255}, 16);
+    wm->SetText(r, "Welcome to Digital Chautari", (r.w-r.x)/2-5, -100, {255,255,255,255}, 30);
+    wm->SetText(r, "Enter a username:",(r.w - 16)/2 -90, (r.h-16)/2 - 70, {255,255,255,255}, 20);
 
     inputBox.h=30;
     inputBox.w= 200;
@@ -33,12 +33,12 @@ void Login::loginUI(){
 
 
     chatNowBtn.h=60;
-    chatNowBtn.w= 100;
+    chatNowBtn.w= 110;
     chatNowBtn.y = (HEIGHT-chatNowBtn.h)/2 + 50;
     chatNowBtn.x = (WIDTH-chatNowBtn.w)/2;
     wm->Draw({255, 255, 255, 0}, chatNowBtn, false);
    
-    wm->SetText(chatNowBtn, "Chat Now", chatNowBtn.w/2 - 38, chatNowBtn.h/2 -10, {255,255,255,255}, 16);
+    wm->SetText(chatNowBtn, "Chat Now", chatNowBtn.w/2-45 , chatNowBtn.h/2 -10, {255,255,255,255}, 20);
 
 }
 
@@ -72,5 +72,7 @@ void Login::loginScreen(){
     eventLoop();
     
     (new Chautari(wm, username))->chautari();
+
+
 
 }

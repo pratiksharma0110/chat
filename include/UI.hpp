@@ -10,7 +10,7 @@
 
 #define TITLE "Digital Chautari"
 
-#define FONT "/home/boxhead/Documents/doge/project/static/tnr.ttf"
+#define FONT "/home/protikbruhh/Desktop/chat/static/whitrabt.ttf"
 
 #define FONTSIZE_1 16
     
