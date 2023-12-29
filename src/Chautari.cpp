@@ -25,6 +25,7 @@ Chautari::Chautari(GUI::WindowManager* wm, std::string username){
     this->username = username;
 }
 
+
 void splitter(){
     std::string rcvbfr(recvbuffer);
     size_t colonPosition = rcvbfr.find(':');
@@ -48,9 +49,61 @@ void splitter(){
 
 }
 
-void updateUsers(std::vector<std::string>& list, const std::string& username) {
+void messageUpdate(){
+    if(recvbuffer[0] != '\0'){
+            std::string bfr(recvbuffer);
+            splitter();
+            if(type == "MSG"){
+                Message m;
+                m.p = {recvUsername, recvMsgBfr};
+                // m.r.y = 150 - 50 * messages.size();
+                if(messages.size()>0){
+                    std::cout << messages.begin()->p.message << " = begin \n";
+                    std::cout << (messages.end()-1)->p.message << " = end-1\n";
+                    m.r.y = (messages.end()-1)->r.y;
+                    std::cout << m.r.y <<"\n";
+                    for(auto it = messages.begin(); it != messages.end(); it++){
+                        it->r.y+=50;
+                    }
+                }
+                else{
+                    std::cout << "first msg\n";
+                    m.r.y = 150;
+                }
+                messages.push_back(m);
+                std::cout << messages.back().p.message;
+                recvbuffer[0] = '\0';
+            }
+            else{
+                // std::cout << recvUsername << " joined\n";
+                recvbuffer[0] = '\0';
+            }
+        }
+        recvMsgBfr = "";
+}
+
+void Chautari::notification(std::string username, int action){
+    if(username != this->username){
+        if(action == USERJOIN){
+            Message m;
+            m.p = {username, "Joined the Chautari!"};
+            if(messages.size() > 0){
+                m.r.y = (messages.end()-1)->r.y;
+                for(auto it = messages.begin(); it != messages.end(); it++){
+                    it->r.y+=50;
+                }
+            }
+            else{
+                m.r.y = 150;
+            }
+            messages.push_back(m);
+        }
+    }
+}
+
+void Chautari::updateUsers(std::vector<std::string>& list, const std::string& username) {
     if (!username.empty() && std::find(list.begin(), list.end(), username) == list.end()) {
-        std::cout << "user online detected: " << username <<"\n";
+        notification(username, USERJOIN);
         list.push_back(username);
     } 
 }
@@ -96,40 +149,8 @@ void Chautari::chautariUI(){
 
 }
 
-void messageUpdate(){
-    if(recvbuffer[0] != '\0'){
-            std::string bfr(recvbuffer);
-            splitter();
-            if(type == "MSG"){
-                Message m;
-                m.p = {recvUsername, recvMsgBfr};
-                // m.r.y = 150 - 50 * messages.size();
-                if(messages.size()>0){
-                    std::cout << messages.begin()->p.message << " = begin \n";
-                    std::cout << (messages.end()-1)->p.message << " = end-1\n";
-                    m.r.y = (messages.end()-1)->r.y;
-                    std::cout << m.r.y <<"\n";
-                    for(auto it = messages.begin(); it != messages.end(); it++){
-                        it->r.y+=50;
-                    }
-                }
-                else{
-                    std::cout << "first msg\n";
-                    m.r.y = 150;
-                }
-                messages.push_back(m);
-                recvbuffer[0] = '\0';
-            }
-            else{
-                // std::cout << recvUsername << " joined\n";
-                recvbuffer[0] = '\0';
-            }
-        }
-        recvMsgBfr = "";
-}
 
-
-void networkThread(int socketDescriptor) {
+void networkThread(Chautari* c, int socketDescriptor) {
     while (!EventHandler::close) {
         EventHandler::listen();
         size_t messageLen;
@@ -157,7 +178,7 @@ void networkThread(int socketDescriptor) {
             // splitter();
             recvbuffer[bytesRead] = '\0';
             messageUpdate();
-            updateUsers(connectedUsers, recvUsername);
+            c->updateUsers(connectedUsers, recvUsername);
             // pid_t pid = getpid();
             // kill(pid, SIGUSR1);
         }
@@ -212,7 +233,7 @@ void Chautari::chautari(){
     }
 
     // Load image
-    SDL_Surface* imageSurface = IMG_Load("/home/protikbruhh/Desktop/chat/static/Chautari_logo.png");
+    SDL_Surface* imageSurface = IMG_Load("/home/boxhead/Documents/doge/project/static/Chautari_logo.png");
     if (imageSurface == nullptr) {
         std::cerr << "Failed to load image: " << IMG_GetError() << std::endl;
         IMG_Quit();
@@ -246,7 +267,7 @@ void Chautari::chautari(){
         std::cout <<"Error connectint to server\n";
     } 
     
-    std::thread nT(networkThread, clientSocket);
+    std::thread nT(networkThread, this, clientSocket);
 
     eventLoop();
     nT.join();

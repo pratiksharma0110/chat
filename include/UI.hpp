@@ -23,7 +23,7 @@ by the members of EventHandler namespace.
 
 #define TITLE "Digital Chautari"
 
-#define FONT "/home/protikbruhh/Desktop/chat/static/whitrabt.ttf"
+#define FONT "/home/boxhead/Documents/doge/project/static/whitrabt.ttf"
     
 typedef struct{
     int r,g,b,a;
