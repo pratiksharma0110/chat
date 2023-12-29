@@ -13,7 +13,7 @@ While in the project folder,
 
 * Now compile the client
 
-`g++ src/*.cpp src/networking/clienthandler.cpp -I include/ -lSDL2 -lSDL2_ttf -o bin/doge`
+`g++ src/*.cpp src/networking/clienthandler.cpp -I include/ -lSDL2 -lSDL2_ttf -lSDL2_image -o bin/client
 
 ## Run
 
@@ -22,5 +22,5 @@ While in the project folder,
 `./bin/server`
 
 * Run the client
-
-`./bin/doge`
+  
+./bin/client
