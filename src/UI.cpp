@@ -110,6 +110,7 @@ void EventHandler::listen(){
         switch (EventHandler::e.type)
         {
             case SDL_QUIT:  // e.type == SDL_QUIT when close window [X] button is pressed
+            close = 1;
             break;
 
             case SDL_MOUSEBUTTONDOWN:   // e.type == SDL_MOUSEBUTTONDOWN when mouse click is detected

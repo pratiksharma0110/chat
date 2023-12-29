@@ -270,7 +270,9 @@ void Chautari::chautari(){
     std::thread nT(networkThread, this, clientSocket);
 
     eventLoop();
-    nT.join();
+
+    std::cout << "out of event loop\n";
+    nT.detach();
 
 }
 
